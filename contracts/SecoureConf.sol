@@ -262,7 +262,7 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
     string public constant contract_symbol = "ZTH";
 
 
-    event NewConference(address owner, uint256 conferenceId);
+    event ConferenceRegistered(address owner, uint256 conferenceId);
     event ConferenceViewTokenRequested(address drmprovider, address buyer, string buyerkey, uint32 conferenceid, uint32 drmid);
     event ConferenceViewTokenGranted(address participant, uint32 conferenceId);
 
@@ -310,8 +310,6 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
 
     mapping(address => Participant) participants;
     //mapping(address => Conference) conferences;
-    mapping(address => Advert) adverts;
-
     Conference[] conferences;
 
     /// @dev A mapping from conference IDs to the address that owns them. All conferences have
@@ -400,6 +398,7 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
 	    //conferences[conferenceId] = conference;
 	    conferenceIndexToOwner[conferenceId] = msg.sender;
 	    ownershipTokenCount[msg.sender]++;
+        emit ConferenceRegistered(msg.sender, conferenceId);
     }
 
     /// @dev set drm provider for a new conference.
@@ -407,7 +406,8 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
 	    uint256 id,
 	    address _provider) public
 	{
-		require(id < conferences.length && msg.sender == conferenceIndexToOwner[id]);
+		require(id < conferences.length, "Invalid Conference Id");
+        require(msg.sender == conferenceIndexToOwner[id], "Not Conference Owner");
 		conferences[id].drmprovider = _provider;
 	}
 
@@ -430,11 +430,6 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
 	    participants[msg.sender] = participant;
     }
 
-    function registerAdvert(string url, uint budget, uint duration) public {
-    	Advert memory advert = Advert(url, budget, duration, 0);
-	    adverts[msg.sender] = advert;
-    }
-
     function changePrice(uint _id, uint _price) public {
         conferences[_id].price = _price;
     }
@@ -455,7 +450,7 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
     }
 
     /// @dev Request viewToken from content provider.
-    /// @param conferenceid is moveie id set at the time of registratoin
+    /// @param conferenceid is set at the time of registratoin
     function requestViewToken(address drmprovider, address buyer, string buyerkey, uint32 conferenceid, uint32 drmid) internal {
         mapping (uint256 => ViewToken) viewTokens = viewRightGrants [buyer];
 
@@ -466,9 +461,10 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
     }
 
     /// @dev Grant viewToken for the participant.
-    /// @param id is moveie id set at the time of registratoin
+    /// @param id is conference id set at the time of registratoin
     function grantViewToken( address buyer, uint32 id, string _drm) public {
-        require(id <= conferences.length && msg.sender == conferences[id].drmprovider);
+        require(id <= conferences.length, "Invalid Id");
+        require(msg.sender == conferences[id].drmprovider, "Invalid DRM Provider");
         mapping (uint256 => ViewToken) viewTokens = viewRightGrants [buyer];
         
         /// Fill the view token with DRM data
@@ -484,14 +480,15 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
         uint256 _bidAmount = msg.value;
         address buyer = msg.sender;
 
-        require(id < conferences.length);
+        require(conferences.length > 0, "No Conferences");
+        require(id <= conferences.length, "Invalid Id");
 
         Conference storage conference = conferences[id];
         Participant storage participant = participants[buyer];
 
         uint256 price = conference.price;
 
-        require(_bidAmount >= price);
+        require(_bidAmount >= price, "Invalid price");
 
         address seller = conferenceIndexToOwner[id];
 
