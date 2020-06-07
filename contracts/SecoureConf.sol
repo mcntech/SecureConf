@@ -4,16 +4,16 @@ pragma solidity ^0.4.24;
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-173.md
 ///  Note: the ERC-165 identifier for this interface is 0x7f5828d0
 interface ERC173 /* is ERC165 */ {
-    /// @dev This emits when ownership of a contract changes.    
+    /// @dev This emits when ownership of a contract changes.
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /// @notice Get the address of the owner    
+    /// @notice Get the address of the owner
     /// @return The address of the owner.
     function owner() view external;
-	
-    /// @notice Set the address of the new owner of the contract   
-    /// @param _newOwner The address of the new owner of the contract    
-    function transferOwnership(address _newOwner) external;	
+
+    /// @notice Set the address of the new owner of the contract
+    /// @param _newOwner The address of the new owner of the contract
+    function transferOwnership(address _newOwner) external;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard
@@ -466,7 +466,7 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
         require(id <= conferences.length, "Invalid Id");
         require(msg.sender == conferences[id].drmprovider, "Invalid DRM Provider");
         mapping (uint256 => ViewToken) viewTokens = viewRightGrants [buyer];
-        
+
         /// Fill the view token with DRM data
         ViewToken memory viewToken = ViewToken({conferenceId:id, cgms:1, status:2, drm:_drm});
         viewTokens[id] = viewToken;
@@ -513,7 +513,7 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
 
     function getConferenceDrm(uint256 index) public view returns (uint32 conferenceid, uint32 cgms, string drm)
     {
-       mapping (uint256 => ViewToken) viewTokens = viewRightGrants[msg.sender];
+        mapping (uint256 => ViewToken) viewTokens = viewRightGrants[msg.sender];
         ViewToken storage token = viewTokens[index];
         conferenceid = token.conferenceId;
         cgms = token.cgms;
@@ -774,6 +774,6 @@ contract SecureConf is ERC165,  ERC721 , ERC721Receiver /*ERC173, ERC721Metadata
     {
        //return bytes4(keccak256("onERC721Received(address,uint256,bytes)"));
        return ERC721_RECEIVED;
-       
+    
     }
 }
